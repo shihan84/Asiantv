@@ -1,0 +1,81 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Run tests
+      run: flutter test
+      
+    - name: Build APK
+      run: flutter build apk --release
+      
+    - name: Build App Bundle
+      run: flutter build appbundle --release
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        
+    - name: Upload App Bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-aab
+        path: build/app/outputs/bundle/release/app-release.aab
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/bundle/release/app-release.aab
+        body: |
+          # Asian TV Flutter App - Release ${{ github.ref_name }}
+          
+          ## 🎉 What's New
+          - Live TV streaming with HLS support
+          - Social media integration (YouTube, Facebook, Instagram)
+          - Modern UI with glassmorphism design
+          - Android 12+ compatibility
+          - Performance optimizations
+          
+          ## 📱 Installation
+          1. Download the APK file below
+          2. Enable "Unknown Sources" in Android Settings
+          3. Install the APK
+          4. Launch and enjoy!
+          
+          ## 📋 System Requirements
+          - Android 5.0 (API 21) or higher
+          - 2GB RAM minimum
+          - 100MB storage space
+          - Stable internet connection
+          
+          ## 🏢 Asian TV Cable Network
+          Hyderabad, India
+          © 2024 All Rights Reserved
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
